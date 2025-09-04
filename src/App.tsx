@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { addMonths, subMonths, format, isSameMonth } from "date-fns";
-import "./styles/App.css";
+import "./App.css";
 import MonthView from "./components/MonthView";
 import { journalEntries, type JournalEntry } from "./data/journalEntries";
 import JournalModal from "./components/JournalModal";

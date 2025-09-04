@@ -1,4 +1,3 @@
-/* --- Basic Reset & App Layout --- */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
@@ -10,12 +9,11 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  max-width: 500px; /* Mobile-first width limit */
+  max-width: 500px;
   margin: 0 auto;
   background-color: #fff;
 }
 
-/* --- Header Styles --- */
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -53,7 +51,6 @@ body {
   color: #555;
 }
 
-/* --- Fixed Weekday Bar --- */
 .weekday-bar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -70,7 +67,6 @@ body {
   font-size: 0.8rem;
 }
 
-/* --- Calendar Area --- */
 .calendar-scroll-area {
   flex-grow: 1;
   overflow-y: auto;
@@ -81,7 +77,6 @@ body {
   height: 40px;
 }
 
-/* --- MonthView Component --- */
 .month-view {
   margin-bottom: 2rem;
 }
@@ -104,9 +99,8 @@ body {
   pointer-events: none;
 }
 
-/* --- DayCell Component --- */
 .day-cell {
-  aspect-ratio: 1 / 1; /* Square cells for mobile */
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -176,7 +170,6 @@ body {
   white-space: nowrap;
 }
 
-/* --- Modal Styles --- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -267,17 +260,14 @@ body {
   right: -25px;
 }
 
-/* --- Media Queries for Responsiveness --- */
-
-/* For tablets and larger screens */
 @media (min-width: 768px) {
   .app-container {
-    max-width: none; /* Allow the container to grow */
+    max-width: none;
   }
 
   .day-cell {
-    aspect-ratio: auto; /* Remove the square constraint */
-    height: 120px; /* Give cells a fixed height */
+    aspect-ratio: auto;
+    height: 120px;
   }
 
   .day-number-simple {
@@ -285,7 +275,7 @@ body {
   }
 
   .modal-content {
-    max-width: 400px; /* Make the modal slightly larger */
+    max-width: 400px;
   }
 
   .modal-nav-btn.prev {
@@ -296,15 +286,14 @@ body {
   }
 }
 
-/* For desktops and very large screens */
 @media (min-width: 1024px) {
   .app-container {
-    max-width: 1200px; /* Add a max-width for very wide screens */
+    max-width: 1200px;
     border-left: 1px solid #e0e0e0;
     border-right: 1px solid #e0e0e0;
   }
 
   .day-cell {
-    height: 140px; /* Make cells even taller */
+    height: 140px;
   }
 }

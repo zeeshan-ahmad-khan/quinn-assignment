@@ -8,7 +8,6 @@ interface DayCellProps {
 }
 
 const DayCell: React.FC<DayCellProps> = ({ day, entry, onClick }) => {
-  // If there's no entry, render a simple day cell with just the number
   if (!entry) {
     return (
       <div className="day-cell">
@@ -17,7 +16,6 @@ const DayCell: React.FC<DayCellProps> = ({ day, entry, onClick }) => {
     );
   }
 
-  // If there IS an entry, render it with the image, rating, and onClick handler
   return (
     <div className="day-cell has-entry" onClick={onClick}>
       <span className="day-number">{day}</span>
