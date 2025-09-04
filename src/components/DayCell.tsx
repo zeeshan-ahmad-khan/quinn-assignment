@@ -1,13 +1,14 @@
 import React from "react";
 import { type JournalEntry } from "../data/journalEntries";
 
-interface DayCellProps {
+interface DayCellProps extends React.HTMLAttributes<HTMLDivElement> {
   day: number;
   entry?: JournalEntry;
   onClick?: () => void;
-  // Add new props to the interface
   isFirstDayOfMonth?: boolean;
   monthLabel?: string;
+  dayId: string;
+  monthKey: string;
 }
 
 const DayCell: React.FC<DayCellProps> = ({
@@ -16,11 +17,20 @@ const DayCell: React.FC<DayCellProps> = ({
   onClick,
   isFirstDayOfMonth,
   monthLabel,
+  dayId,
+  monthKey,
+  ...rest
 }) => {
+  const dayCellClasses = `day-cell ${isFirstDayOfMonth ? "first-day" : ""}`;
+
   if (!entry) {
     return (
-      <div className="day-cell">
-        {/* Conditionally render the month label for empty cells too */}
+      <div
+        className={dayCellClasses}
+        data-day-id={dayId}
+        data-month-key={monthKey}
+        {...rest}
+      >
         {isFirstDayOfMonth && (
           <div className="day-cell-month-label">{monthLabel}</div>
         )}
@@ -30,8 +40,13 @@ const DayCell: React.FC<DayCellProps> = ({
   }
 
   return (
-    <div className="day-cell has-entry" onClick={onClick}>
-      {/* Conditionally render the month label for entry cells */}
+    <div
+      className={`${dayCellClasses} has-entry`}
+      onClick={onClick}
+      data-day-id={dayId}
+      data-month-key={monthKey}
+      {...rest}
+    >
       {isFirstDayOfMonth && (
         <div className="day-cell-month-label">{monthLabel}</div>
       )}

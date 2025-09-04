@@ -1,12 +1,21 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { flushSync } from "react-dom";
-import { addMonths, subMonths, format, isSameMonth } from "date-fns";
+import {
+  addMonths,
+  subMonths,
+  format,
+  isSameMonth,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  isSameDay,
+  parse,
+} from "date-fns";
 import "./App.css";
-import MonthView from "./components/MonthView";
+import DayCell from "./components/DayCell";
 import { journalEntries, type JournalEntry } from "./data/journalEntries";
 import JournalModal from "./components/JournalModal";
-
-const getMonthKey = (date: Date) => format(date, "yyyy-MM");
 
 function App() {
   const [headerDate, setHeaderDate] = useState(new Date());
@@ -22,31 +31,56 @@ function App() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
   const bottomSentinelRef = useRef<HTMLDivElement>(null);
-  const monthVisibility = useRef(new Map<string, number>());
-  const firstMonthRef = useRef<HTMLDivElement>(null);
 
+  const scrollMetrics = useRef<{
+    scrollTop: number;
+    scrollHeight: number;
+  } | null>(null);
+
+  // --- Logic to create a single, flat array of all days ---
+  const allDays = useMemo(() => {
+    const days: Date[] = [];
+    visibleMonths.forEach((monthDate) => {
+      const firstDay = startOfMonth(monthDate);
+      const lastDay = endOfMonth(monthDate);
+      const daysInMonth = eachDayOfInterval({ start: firstDay, end: lastDay });
+      days.push(...daysInMonth);
+    });
+    return days;
+  }, [visibleMonths]);
+
+  // --- Scrolling Logic ---
   const loadPrevious = useCallback(() => {
     if (isLoading) return;
     setIsLoading(true);
     const container = scrollContainerRef.current;
-    const firstMonthEl = firstMonthRef.current;
-    if (!container || !firstMonthEl) {
+    if (!container) {
       setIsLoading(false);
       return;
     }
-    const previousHeight = firstMonthEl.offsetHeight;
+    scrollMetrics.current = {
+      scrollTop: container.scrollTop,
+      scrollHeight: container.scrollHeight,
+    };
     flushSync(() => {
       setVisibleMonths((prevMonths) => [
         subMonths(prevMonths[0], 1),
         ...prevMonths.slice(0, 6),
       ]);
     });
-    const newScrollTop =
-      container.scrollTop +
-      (firstMonthRef?.current?.offsetHeight ?? 0 - previousHeight);
-    container.scrollTop = newScrollTop;
-    setIsLoading(false);
   }, [isLoading]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container && scrollMetrics.current) {
+      const newScrollHeight = container.scrollHeight;
+      const oldMetrics = scrollMetrics.current;
+      container.scrollTop =
+        oldMetrics.scrollTop + (newScrollHeight - oldMetrics.scrollHeight);
+      scrollMetrics.current = null;
+    }
+    setIsLoading(false);
+  }, [allDays]);
 
   const loadNext = useCallback(() => {
     if (isLoading) return;
@@ -55,19 +89,19 @@ function App() {
       ...prevMonths.slice(1),
       addMonths(prevMonths[prevMonths.length - 1], 1),
     ]);
-    setTimeout(() => setIsLoading(false), 50);
   }, [isLoading]);
 
+  // --- Other Hooks ---
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) {
       const today = new Date();
-      const currentMonthKey = getMonthKey(today);
+      const firstDayOfCurrentMonth = startOfMonth(today);
       const currentMonthEl = container.querySelector(
-        `[data-month-key="${currentMonthKey}"]`
+        `[data-day-id="${format(firstDayOfCurrentMonth, "yyyy-MM-dd")}"]`
       ) as HTMLElement;
       if (currentMonthEl) {
-        const headerHeight = 70;
+        const headerHeight = 90;
         const topPos = currentMonthEl.offsetTop - headerHeight;
         container.scrollTo({ top: topPos, behavior: "instant" });
       }
@@ -77,6 +111,7 @@ function App() {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
+
     const sentinelObserver = new IntersectionObserver((entries) => {
       if (isLoading) return;
       entries.forEach((entry) => {
@@ -91,42 +126,46 @@ function App() {
     if (bottomSentinelRef.current)
       sentinelObserver.observe(bottomSentinelRef.current);
 
-    const monthObserver = new IntersectionObserver(
+    const dayObserver = new IntersectionObserver(
       (entries) => {
+        const monthCounts: Record<string, number> = {};
         entries.forEach((entry) => {
-          const monthKey = (entry.target as HTMLElement).dataset.monthKey;
-          if (monthKey)
-            monthVisibility.current.set(monthKey, entry.intersectionRatio);
-        });
-        let mostVisibleMonthKey = "";
-        let maxRatio = 0;
-        monthVisibility.current.forEach((ratio, key) => {
-          if (ratio > maxRatio) {
-            maxRatio = ratio;
-            mostVisibleMonthKey = key;
+          if (entry.isIntersecting) {
+            const monthKey = (entry.target as HTMLElement).dataset.monthKey;
+            if (monthKey) {
+              monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+            }
           }
         });
+
+        let mostVisibleMonthKey = "";
+        let maxCount = 0;
+        for (const monthKey in monthCounts) {
+          if (monthCounts[monthKey] > maxCount) {
+            maxCount = monthCounts[monthKey];
+            mostVisibleMonthKey = monthKey;
+          }
+        }
+
         if (mostVisibleMonthKey) {
           const newHeaderDate = new Date(mostVisibleMonthKey + "-02");
           if (!isSameMonth(newHeaderDate, headerDate))
             setHeaderDate(newHeaderDate);
         }
       },
-      {
-        root: container,
-        threshold: Array.from({ length: 101 }, (_, i) => i / 100),
-      }
+      { root: container, threshold: 0.5 }
     );
 
-    const monthElements = container.querySelectorAll(".month-view");
-    monthElements.forEach((el) => monthObserver.observe(el));
+    const dayElements = container.querySelectorAll(".day-cell");
+    dayElements.forEach((el) => dayObserver.observe(el));
 
     return () => {
       sentinelObserver.disconnect();
-      monthObserver.disconnect();
+      dayObserver.disconnect();
     };
-  }, [visibleMonths, headerDate, loadPrevious, loadNext, isLoading]);
+  }, [allDays, headerDate, loadPrevious, loadNext, isLoading]);
 
+  // --- Modal Logic ---
   const handleEntryClick = (entry: JournalEntry) => setSelectedEntry(entry);
   const handleCloseModal = () => setSelectedEntry(null);
   const selectedEntryIndex = selectedEntry
@@ -150,7 +189,9 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-left">
-          <button className="back-button">‹</button>
+          <button className="back-button" aria-label="Go back">
+            ‹
+          </button>
           <h1>my hair diary</h1>
         </div>
         <div className="header-right">
@@ -160,26 +201,60 @@ function App() {
 
       <div className="weekday-bar">
         {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
-          <div key={day} className="weekday-header">
+          <div key={day} className="weekday-header-fixed">
             {day}
           </div>
         ))}
       </div>
 
-      <main ref={scrollContainerRef} className="calendar-scroll-area">
-        <div ref={topSentinelRef} className="sentinel top"></div>
-        {visibleMonths.map((monthDate, index) => (
-          <MonthView
-            ref={index === 0 ? firstMonthRef : null}
-            key={getMonthKey(monthDate)}
-            monthDate={monthDate}
-            data-month-key={getMonthKey(monthDate)}
-            journalEntries={journalEntries}
-            onEntryClick={handleEntryClick}
-          />
-        ))}
-        <div ref={bottomSentinelRef} className="sentinel bottom"></div>
+      <main
+        ref={scrollContainerRef}
+        className="calendar-scroll-area calendar-grid"
+      >
+        <div
+          ref={topSentinelRef}
+          className="sentinel top"
+          style={{ gridColumn: "1 / -1" }}
+        ></div>
+
+        {allDays.map((day, index) => {
+          const entry = journalEntries.find((e) => {
+            const entryDate = parse(e.date, "dd/MM/yyyy", new Date());
+            return isSameDay(entryDate, day);
+          });
+
+          const isFirstOfMonth = day.getDate() === 1;
+          const style = index === 0 ? { gridColumnStart: getDay(day) + 1 } : {};
+
+          return (
+            <DayCell
+              key={day.toISOString()}
+              day={day.getDate()}
+              entry={entry}
+              isFirstDayOfMonth={isFirstOfMonth}
+              monthLabel={isFirstOfMonth ? format(day, "MMM") : undefined}
+              dayId={format(day, "yyyy-MM-dd")}
+              monthKey={format(day, "yyyy-MM")}
+              style={style}
+              onClick={entry ? () => handleEntryClick(entry) : undefined}
+            />
+          );
+        })}
+
+        <div
+          ref={bottomSentinelRef}
+          className="sentinel bottom"
+          style={{ gridColumn: "1 / -1" }}
+        ></div>
       </main>
+
+      {/* <footer className="app-footer">
+        <div className="footer-icon">🏠</div>
+        <div className="footer-icon">🔍</div>
+        <div className="footer-add-button">+</div>
+        <div className="footer-icon">❤️</div>
+        <div className="footer-icon">👤</div>
+      </footer> */}
 
       {selectedEntry && (
         <JournalModal

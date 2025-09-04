@@ -39,7 +39,6 @@ const JournalModal: React.FC<JournalModalProps> = ({
             }}
           />
           <div className="modal-details">
-            {/* New container for date to give it more space */}
             <div className="modal-date-container">
               <p className="modal-date">{format(entryDate, "dd MMMM")}</p>
               <p className="modal-rating">
@@ -47,7 +46,6 @@ const JournalModal: React.FC<JournalModalProps> = ({
               </p>
             </div>
 
-            {/* New categories section */}
             <div className="modal-categories">
               {entry.categories.map((category) => (
                 <div key={category} className="category-pill">

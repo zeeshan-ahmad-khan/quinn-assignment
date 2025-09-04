@@ -1,4 +1,3 @@
-/* --- Basic Reset & App Layout --- */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
@@ -16,7 +15,6 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Header & Weekday Bar --- */
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -65,12 +63,15 @@ body {
   text-transform: uppercase;
 }
 
-/* --- Calendar Area --- */
-.calendar-scroll-area {
+.calendar-scroll-area.calendar-grid {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 1rem 0.5rem 0 0.5rem;
+  padding: 1rem 0.5rem;
   scrollbar-width: none;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  align-content: start;
 }
 .calendar-scroll-area::-webkit-scrollbar {
   display: none;
@@ -80,34 +81,18 @@ body {
   height: 40px;
 }
 
-/* --- MonthView Component (Updated for continuous flow) --- */
-.month-view {
-  margin-bottom: 0; /* REMOVED margin to make months continuous */
-  padding-bottom: 1rem; /* Added padding for a little space after the last week */
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  position: relative;
-}
-
-/* --- DayCell Component (Updated for new label) --- */
 .day-cell {
-  aspect-ratio: 1/ 1.3;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding-top: 0.5rem;
   border-radius: 4px;
-  position: relative; /* Make cell a positioning context for the new label */
-  border: 1px solid #e1e1e1;
+  position: relative;
+  border: 1px solid #f0f0f0;
   box-sizing: border-box;
 }
-/* OLD .month-label style is no longer needed and can be deleted */
 
-/* NEW style for the label inside the DayCell */
 .day-cell-month-label {
   position: absolute;
   top: 6px;
@@ -121,7 +106,9 @@ body {
 
 .day-cell.empty {
   background-color: transparent;
+  border-color: transparent;
 }
+
 .day-number-simple {
   color: #333;
   font-size: 0.8rem;
@@ -172,7 +159,6 @@ body {
   white-space: nowrap;
 }
 
-/* --- Footer --- */
 .app-footer {
   display: flex;
   justify-content: space-around;
@@ -203,7 +189,6 @@ body {
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Modal Styles --- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -242,7 +227,6 @@ body {
   width: 100%;
   height: 400px;
   object-fit: cover;
-  object-position: center;
   display: block;
 }
 .modal-details {
@@ -286,6 +270,7 @@ body {
 }
 .modal-rating {
   margin: 0;
+  font-size: 0.8rem;
 }
 .modal-categories {
   display: flex;
@@ -312,17 +297,13 @@ body {
   padding: 0.5rem 0;
 }
 
-/* --- Media Queries for Responsiveness --- */
 @media (min-width: 768px) {
   .app-container {
-    max-width: none;
+    max-width: 600px;
   }
   .day-cell {
     aspect-ratio: auto;
-    height: 140px;
-  }
-  .day-cell .entry-rating {
-    font-size: 0.7rem;
+    height: 110px;
   }
   .day-number-simple {
     font-size: 0.9rem;
@@ -341,17 +322,19 @@ body {
     height: 32px;
     font-size: 0.9rem;
   }
+  .modal-rating {
+    font-size: 0.9rem;
+  }
 }
 
 @media (min-width: 1024px) {
   .app-container {
-    max-width: 1200px;
+    max-width: 800px;
   }
   .day-cell {
-    width: 100%;
-    height: 200px;
+    height: 130px;
   }
-  .day-cell .entry-rating {
+  .modal-rating {
     font-size: 1rem;
   }
 }
