@@ -30,12 +30,7 @@ const MonthView = forwardRef<HTMLDivElement, MonthViewProps>(
     return (
       <div className="month-view" ref={ref} {...rest}>
         <div className="calendar-grid">
-          <div
-            className="month-label"
-            style={{ gridColumnStart: startingDayIndex + 1 }}
-          >
-            {format(monthDate, "MMM yyyy")}
-          </div>
+          {/* The old month-label div is removed from here */}
 
           {Array.from({ length: startingDayIndex }).map((_, index) => (
             <div key={`padding-${index}`} className="day-cell empty"></div>
@@ -46,11 +41,18 @@ const MonthView = forwardRef<HTMLDivElement, MonthViewProps>(
               const entryDate = parse(e.date, "dd/MM/yyyy", new Date());
               return isSameDay(entryDate, day);
             });
+
+            // Check if this is the first day of the month
+            const isFirst = day.getDate() === 1;
+
             return (
               <DayCell
                 key={index}
                 day={day.getDate()}
                 entry={entry}
+                // Pass new props to the DayCell component
+                isFirstDayOfMonth={isFirst}
+                monthLabel={isFirst ? format(monthDate, "MMM") : undefined}
                 onClick={entry ? () => onEntryClick(entry) : undefined}
               />
             );
